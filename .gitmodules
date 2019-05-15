@@ -1,0 +1,4 @@
+[submodule "aws-iot-device-sdk-python"]
+	path = aws-iot-device-sdk-python
+	url = git@github.com:aws/aws-iot-device-sdk-python.git
+    ignore = dirty
