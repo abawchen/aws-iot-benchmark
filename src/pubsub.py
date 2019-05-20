@@ -125,3 +125,8 @@ while loopCount < count:
 
 print('Successes:', receives)
 print('MsgsPerSec:', deltas/receives)
+
+"""
+('Successes:', 100)
+('MsgsPerSec:', 0.10837019999999996)
+"""
