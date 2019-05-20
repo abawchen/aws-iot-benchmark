@@ -8,14 +8,21 @@ import dateutil.parser
 
 AllowedActions = ['both', 'publish', 'subscribe']
 
+receives = 0
+deltas = 0
 # Custom MQTT message callback
-def customCallback(client, userdata, message):
+def subscriberCallback(client, userdata, message):
+    global receives
+    global deltas
+    receives += 1
     print("Received a new message: ")
     print(message.payload)
     payload = json.loads(message.payload)
-    sent = dateutil.parser.parse(payload['sent'])
-    delta = datetime.now() - sent
-    print(delta.total_seconds())
+    sent_ts = dateutil.parser.parse(payload['sent_ts'])
+    received = datetime.now()
+    delta = received - sent_ts
+    deltas += delta.total_seconds()
+    # print(delta.total_seconds())
     print("from topic: ")
     print(message.topic)
     print("--------------\n\n")
@@ -36,6 +43,8 @@ parser.add_argument("-m", "--mode", action="store", dest="mode", default="both",
 parser.add_argument("-M", "--message", action="store", dest="message", default="Hello World!",
                     help="Message to publish")
 
+parser.add_argument("-co", "--count", action="store", dest="count", default=10, help="Thread number")
+
 args = parser.parse_args()
 host = args.host
 rootCAPath = args.rootCAPath
@@ -45,6 +54,7 @@ port = args.port
 useWebsocket = args.useWebsocket
 clientId = args.clientId
 topic = args.topic
+count = int(args.count)
 
 if args.mode not in AllowedActions:
     parser.error("Unknown --mode option %s. Must be one of %s" % (args.mode, str(AllowedActions)))
@@ -67,7 +77,8 @@ if not args.useWebsocket and not args.port:  # When no port override for non-Web
 
 # Configure logging
 logger = logging.getLogger("AWSIoTPythonSDK.core")
-logger.setLevel(logging.DEBUG)
+# logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 streamHandler = logging.StreamHandler()
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 streamHandler.setFormatter(formatter)
@@ -94,20 +105,23 @@ myAWSIoTMQTTClient.configureMQTTOperationTimeout(5)  # 5 sec
 # Connect and subscribe to AWS IoT
 myAWSIoTMQTTClient.connect()
 if args.mode == 'both' or args.mode == 'subscribe':
-    myAWSIoTMQTTClient.subscribe(topic, 1, customCallback)
+    myAWSIoTMQTTClient.subscribe(topic, 1, subscriberCallback)
 time.sleep(2)
 
 # Publish to the same topic in a loop forever
 loopCount = 0
-while True:
+while loopCount < count:
     if args.mode == 'both' or args.mode == 'publish':
         message = {}
         message['message'] = args.message
         message['sequence'] = loopCount
-        message['sent'] = datetime.now().isoformat()
+        message['sent_ts'] = datetime.now().isoformat()
         messageJson = json.dumps(message)
         myAWSIoTMQTTClient.publish(topic, messageJson, 1)
         if args.mode == 'publish':
             print('Published topic %s: %s\n' % (topic, messageJson))
         loopCount += 1
-    time.sleep(1)
+    time.sleep(0.25)
+
+print('Successes:', receives)
+print('MsgsPerSec:', deltas/receives)
