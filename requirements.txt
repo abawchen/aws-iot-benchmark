@@ -1,1 +1,1 @@
--e git+git@github.com:aws/aws-iot-device-sdk-python.git@fec184887e8a92be9a55be59c97fb554cb9054c0#egg=AWSIoTPythonSDK&subdirectory=../../aws-iot-device-sdk-python
+-e git+git@github.com:aws/aws-iot-device-sdk-python.git@fec184887e8a92be9a55be59c97fb554cb9054c0#egg=AWSIoTPythonSDK
