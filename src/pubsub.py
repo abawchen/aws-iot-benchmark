@@ -4,6 +4,7 @@ import logging
 import time
 import argparse
 import json
+import dateutil.parser
 
 AllowedActions = ['both', 'publish', 'subscribe']
 
@@ -11,6 +12,10 @@ AllowedActions = ['both', 'publish', 'subscribe']
 def customCallback(client, userdata, message):
     print("Received a new message: ")
     print(message.payload)
+    payload = json.loads(message.payload)
+    sent = dateutil.parser.parse(payload['sent'])
+    delta = datetime.now() - sent
+    print(delta.total_seconds())
     print("from topic: ")
     print(message.topic)
     print("--------------\n\n")
